@@ -65,14 +65,21 @@ async function run() {
     app.post("/user",async(req,res)=>{
         const userInfo =req.body
         userInfo.role ="donor"
+        userInfo.status="active"
         userInfo.createAt = new Date()
         const result = await usersCollection.insertOne(userInfo)
         res.send(result)
     })
 
+    // all user 
+    app.get("/All-user",verifyFBToken, async(req,res)=>{
+      const result =await usersCollection.find().toArray();
+      res.send(result)
+    })
 
-    app.get("/user/role",async(req,res)=>{
-        const email =req.query.email
+
+    app.get("/user/role/:email",async(req,res)=>{
+        const email =req.params.email
         const query ={email:email}
         const result = await usersCollection.findOne(query)
         res.send(result)
@@ -85,6 +92,39 @@ async function run() {
         data.createAt =new Date();
         const result =await requestColocation.insertOne(data);
         res.send(result)
+    })
+
+
+    // status update 
+    app.patch("/update/status",verifyFBToken, async(req,res)=>{
+      const {email,status}=req.query;
+      const query ={email:email};
+      const update ={
+        $set:{
+          status:status
+        }
+      }
+      const result =await usersCollection.updateOne(query,update)
+      res.send(result)
+    })
+
+    // My request api
+    app.get("/My-request",verifyFBToken,async(req,res)=>{
+      const email =req.query.email;
+      const size =Number(req.query.size)
+      const page =Number(req.query.page)
+
+      const query={requesterEmail:email};
+
+      const result=await requestColocation
+      .find(query)
+      .limit(size)
+      .skip(size*page)
+      .toArray()
+
+      const totalRequest =await requestColocation.countDocuments(query)
+
+      res.send({request:result,totalRequest})
     })
 
     // Send a ping to confirm a successful connection
