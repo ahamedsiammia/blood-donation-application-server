@@ -110,7 +110,7 @@ async function run() {
 
     // My request api
     app.get("/My-request",verifyFBToken,async(req,res)=>{
-      const email =req.query.email;
+      const email =req.decoded_email;
       const size =Number(req.query.size)
       const page =Number(req.query.page)
 
