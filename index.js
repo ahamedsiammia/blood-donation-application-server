@@ -57,6 +57,7 @@ async function run() {
     const db = client.db("project11");
     const usersCollection = db.collection("user");
     const requestColocation = db.collection("request");
+    const paymentColocation = db.collection("payment");
 
     app.post("/user", async (req, res) => {
       const userInfo = req.body;
@@ -185,7 +186,7 @@ async function run() {
                 name:"please donate"
               }
             },
-            quantity: 2,
+            quantity: 1,
           },
         ],
         mode: "payment",
@@ -193,13 +194,34 @@ async function run() {
           donorName:information?.donorName
         },
         customer_email:information.donorEmail,
-        success_url: `${process.env.SITE_DOMAIN}/payment-success?sesion_id={CHECKOUT_SESSION_ID}`,
-        cencel_url: `${process.env.SITE_DOMAIN}/payment-cancelled`
+        success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.SITE_DOMAIN}/payment-cancelled`
       });
       res.send({url:session.url})
     });
 
+    app.post("/success-payment",async(req,res)=>{
+      const {session_id}=req.query;
+      const session =await stripe.checkout.sessions.retrieve(
+        session_id
+      );
+      console.log(session);
 
+      const transactionId =session.payment_intent;
+      if(session.payment_status == "paid"){
+        const paymentInfo ={
+          apmount:session.amount_total/100,
+          currency:session.currency,
+          donorEmail:session.customer_email,
+          donorName:session.name,
+          transactionId,
+          payment_status:session.payment_status,
+          paidAt : new Date()
+        }
+        const result = await paymentColocation.insertOne(paymentInfo)
+        return res.send(result)
+      }
+    })
 
 
     // blood donation page pablic
@@ -231,6 +253,46 @@ async function run() {
       const result = await requestColocation.updateOne(query,update)
       res.send(result)
     })
+
+
+    // search request 
+    app.get("/search-request",async(req,res)=>{
+      const {bloodGroup,district,upazila}=req.query;
+      console.log({bloodGroup,district,upazila})
+      const query ={}
+      if(!query){
+        return;
+      }
+      if(bloodGroup){
+        query.blood = bloodGroup.replace(/ /g, "+").trim()
+      }
+      if(district){
+        query.district= district
+      }
+      if(upazila){
+        query.upazila =upazila
+      }
+      const result = await requestColocation.find(query).toArray()
+      res.send(result)
+    })
+
+
+    // cencel  api 
+    app.patch("/cancel-request",verifyFBToken,async(req,res)=>{
+      const {id,status}=req.query;
+        console.log(id,status);
+      const query ={_id :new ObjectId(id)}
+    
+      const update ={
+        $set :{
+          status :status
+        }
+      }
+      const result =await requestColocation.updateOne(query,update)
+      res.send(result)
+    })
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
