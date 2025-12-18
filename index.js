@@ -292,6 +292,28 @@ async function run() {
       res.send(result)
     })
 
+    // done api 
+    app.patch("/done-request",verifyFBToken,async(req,res)=>{
+      const {id,status}=req.query;
+      const query ={_id :new ObjectId(id)}
+      const update={
+        $set:{
+          status:status
+        }
+      }
+      const result=await requestColocation.updateOne(query,update)
+      res.send(result)
+    })
+
+
+    // view request 
+    app.get("/Dashboard/view-request/:id",async(req,res)=>{
+      const {id} = req.params;
+      const query ={_id : new ObjectId(id)}
+      const result = await requestColocation.findOne(query)
+      res.send(result)
+    })
+
 
 
     // Send a ping to confirm a successful connection
