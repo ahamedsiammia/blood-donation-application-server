@@ -71,7 +71,8 @@ async function run() {
     // all user
     app.get("/All-user", verifyFBToken, async (req, res) => {
       const result = await usersCollection.find().toArray();
-      res.send(result);
+      const totaluser =await usersCollection.countDocuments()
+      res.send({user :result, totaluser});
     });
 
     app.get("/user/role/:email", async (req, res) => {
@@ -151,9 +152,14 @@ async function run() {
     app.get("/All-request", verifyFBToken, async (req, res) => {
       const size = Number(req.query.size);
       const page = Number(req.query.page);
-
+      const status =req.query.status;
+      let query = {}
+      if(status){
+        query.status = status
+      }
+      console.log(query);
       const result = await requestColocation
-        .find()
+        .find(query)
         .limit(size)
         .skip(size * page)
         .toArray();
@@ -315,8 +321,28 @@ async function run() {
     })
 
     // donar dashboard api 
-    app.get("/resent-request",async(req,res)=>{
-      const result = await requestColocation.find().toArray
+    app.get("/resent-request",verifyFBToken,async(req,res)=>{ 
+      const result = await requestColocation.find().sort({createAt:-1}).limit(3).toArray()
+       res.send(result) 
+      })
+
+      // edit
+       app.get("/Dashboard/edit-request/:id",async(req,res)=>{
+      const {id} = req.params;
+      const query ={_id : new ObjectId(id)}
+      const result = await requestColocation.findOne(query)
+      res.send(result)
+    })
+
+    // Edit request api 
+    app.put("/Dashboard/update-request/:id",async(req,res)=>{
+      const {id}=req.params;
+      const formdata=req.body;
+      const query ={_id : new ObjectId(id)}
+      const update ={
+        $set: formdata  
+      }
+      const result =await requestColocation.updateOne(query,update);
       res.send(result)
     })
 
