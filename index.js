@@ -122,8 +122,12 @@ async function run() {
       const email = req.decoded_email;
       const size = Number(req.query.size);
       const page = Number(req.query.page);
+      const status =req.query.status;
+      const query = { requesterEmail: email};
 
-      const query = { requesterEmail: email };
+      if(status){
+        query.status = status
+      }
 
       const result = await requestColocation
         .find(query)
@@ -171,7 +175,6 @@ async function run() {
       if(status){
         query.status = status
       }
-      console.log(query);
       const result = await requestColocation
         .find(query)
         .limit(size)
