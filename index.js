@@ -90,7 +90,7 @@ async function run() {
       res.send(result);
     });
 
-    // status update
+    // status update blocked unblocked
     app.patch("/update/status", verifyFBToken, async (req, res) => {
       const { email, status } = req.query;
       const query = { email: email };
@@ -102,6 +102,20 @@ async function run() {
       const result = await usersCollection.updateOne(query, update);
       res.send(result);
     });
+
+    // role update volunteer and admin 
+    app.patch("/update/role",verifyFBToken,async(req,res)=>{
+      const {email,role}=req.query;
+      console.log(email,role);
+      const query ={email:email}
+      const update={
+        $set:{
+          role:role,
+        },
+      }
+      const result =await usersCollection.updateOne(query,update)
+      res.send(result)
+    })
 
     // My request api
     app.get("/My-request", verifyFBToken, async (req, res) => {
@@ -181,7 +195,7 @@ async function run() {
     app.post("/create-payment-checkout", async (req, res) => {
       const information = req.body;
       const Amount = parseInt(information.donateAmount) * 100;
-
+      
       const session = await stripe.checkout.sessions.create({
         line_items: [
           {
@@ -216,19 +230,25 @@ async function run() {
       const transactionId =session.payment_intent;
       if(session.payment_status == "paid"){
         const paymentInfo ={
-          apmount:session.amount_total/100,
+          amount:session.amount_total/100,
           currency:session.currency,
           donorEmail:session.customer_email,
-          donorName:session.name,
+          donorName:session.metadata.donorName,
           transactionId,
           payment_status:session.payment_status,
           paidAt : new Date()
         }
+        console.log(paymentInfo);
         const result = await paymentColocation.insertOne(paymentInfo)
         return res.send(result)
       }
     })
 
+    // payment table api 
+    app.get("/payment-details",verifyFBToken,async(req,res)=>{
+      const result = await paymentColocation.find().toArray()
+      res.send(result);
+    })
 
     // blood donation page pablic
 
