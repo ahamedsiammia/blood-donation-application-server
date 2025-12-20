@@ -336,7 +336,7 @@ async function run() {
 
 
     // view request dashboard
-    app.get("/Dashboard/view-request/:id",async(req,res)=>{
+    app.get("/dashboard/view-request/:id",async(req,res)=>{
       const {id} = req.params;
       const query ={_id : new ObjectId(id)}
       const result = await requestColocation.findOne(query)
@@ -350,7 +350,7 @@ async function run() {
       })
 
       // edit
-       app.get("/Dashboard/edit-request/:id",async(req,res)=>{
+       app.get("/dashboard/edit-request/:id",async(req,res)=>{
       const {id} = req.params;
       const query ={_id : new ObjectId(id)}
       const result = await requestColocation.findOne(query)
