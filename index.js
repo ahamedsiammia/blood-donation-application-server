@@ -371,6 +371,14 @@ async function run() {
     })
 
 
+    app.get("/donors",async(req,res)=>{
+      const role = "donor"
+      const query ={role : "donor"}
+      const result = await usersCollection.find(query).toArray();
+      res.send(result)
+    })
+
+
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
